@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 24 - Resti Intania Denas</title>
+
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --rose-glow: 0 0 30px rgba(244, 63, 94, 0.3);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #030303;
+            color: #f8fafc;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        h1,
+        h2,
+        h3,
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Ambient Orbs */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: -1;
+            animation: float 20s infinite alternate ease-in-out;
+            opacity: 0.6;
+        }
+
+        .orb-1 {
+            width: 350px;
+            height: 350px;
+            background: rgba(159, 18, 57, 0.25);
+            top: -5%;
+            left: -5%;
+        }
+
+        .orb-2 {
+            width: 450px;
+            height: 450px;
+            background: rgba(76, 29, 149, 0.15);
+            bottom: -10%;
+            right: -5%;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(40px, 60px) scale(1.1);
+            }
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.6s;
+        }
+
+        /* Polaroid Setup */
+        .polaroid-container {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            height: 380px;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+
+        .polaroid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            padding: 14px 14px 50px 14px;
+            border-radius: 6px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            transform-origin: bottom center;
+        }
+
+        .polaroid img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            background: #292524;
+        }
+
+        .polaroid:nth-child(1) {
+            transform: rotate(-4deg) translateY(0);
+            z-index: 3;
+        }
+
+        .polaroid:nth-child(2) {
+            transform: rotate(3deg) translateY(8px);
+            z-index: 2;
+        }
+
+        .polaroid:nth-child(3) {
+            transform: rotate(7deg) translateY(16px);
+            z-index: 1;
+        }
+
+        .polaroid.slide-out {
+            transform: translateX(120%) rotate(20deg) scale(0.9) !important;
+            opacity: 0;
+            z-index: 4;
+        }
+
+        #heart-btn {
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hide-screen {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient Background -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <!-- Hidden YouTube Player Container (Jangan pakai class hidden agar Iframe tetap ter-load oleh browser) -->
+    <div id="youtube-player" class="fixed -top-10 -left-10 w-0 h-0 opacity-0 pointer-events-none"></div>
+
+    <!-- STAGE 1: THE HEARTBEAT LOCK -->
+    <div id="intro-screen" class="fixed inset-0 flex flex-col items-center justify-center z-50 bg-[#030303]">
+        <div class="text-center px-4 w-full max-w-md">
+            <h1 class="serif text-3xl md:text-4xl text-stone-300 mb-2 tracking-wide font-medium">Resti Intania Denas.
+            </h1>
+            <p class="text-stone-500 text-xs tracking-[0.3em] uppercase mb-12">Tap hatinya pelan-pelan</p>
+
+            <button id="heart-btn" onclick="pumpHeart()"
+                class="text-rose-600 text-6xl md:text-7xl drop-shadow-[0_0_25px_rgba(225,29,72,0.4)] hover:text-rose-500">
+                <i class="fas fa-heart"></i>
+            </button>
+
+            <p id="instruction" class="text-stone-500 text-xs mt-8 h-4 transition-all opacity-0">Lagi...</p>
+
+            <!-- Progress Line -->
+            <div class="w-32 h-[2px] bg-white/5 mx-auto mt-6 overflow-hidden rounded-full">
+                <div id="heart-progress" class="h-full bg-rose-500 w-0 transition-all duration-300"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STAGE 2: MAIN CONTENT -->
+    <div id="main-content" class="hidden relative z-10 w-full">
+
+        <!-- Floating Header -->
+        <div class="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-40 mix-blend-difference">
+            <div class="serif text-lg md:text-xl font-bold tracking-widest text-white/80">R I D</div>
+            <button onclick="toggleMusic()"
+                class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/80 hover:bg-white hover:text-black transition-all backdrop-blur-sm">
+                <i id="music-icon" class="fas fa-music"></i>
+            </button>
+        </div>
+
+        <!-- Hero Section -->
+        <section class="min-h-[90vh] flex flex-col items-center justify-center px-6 text-center pt-20">
+            <span class="text-rose-500 tracking-[0.4em] text-xs font-semibold uppercase mb-6 reveal">Happy Birthday</span>
+            <h1
+                class="serif text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-stone-100 via-rose-100 to-stone-400 mb-6 reveal reveal-delay-1 text-glow">
+                Selamat 24 Tahun,<br>Ayangg.
+            </h1>
+            <p
+                class="text-stone-400 max-w-md mx-auto text-sm md:text-base leading-relaxed reveal reveal-delay-2 font-light">
+                Makasih udah selalu nemenin dan sabar banget sama aku selama ini.
+            </p>
+            <div class="mt-20 text-stone-600 animate-bounce reveal reveal-delay-2">
+                <i class="fas fa-chevron-down text-xl"></i>
+            </div>
+        </section>
+
+        <!-- Emotional Letter Section -->
+        <section class="py-12 px-6 max-w-3xl mx-auto">
+            <div class="glass rounded-[2rem] p-8 md:p-14 relative overflow-hidden reveal">
+                <!-- Glowing effect -->
+                <div class="absolute -top-20 -right-20 w-48 h-48 bg-rose-600/10 blur-[50px] rounded-full"></div>
+                <div class="absolute -bottom-20 -left-20 w-48 h-48 bg-purple-600/10 blur-[50px] rounded-full"></div>
+
+                <i class="fas fa-quote-left text-3xl md:text-4xl text-rose-500/30 mb-6"></i>
+
+                <div class="space-y-6 text-stone-300 font-light text-base md:text-lg leading-relaxed relative z-10">
+                    <p>
+                        Hai sayang, selamat ulang tahun ya. Kalau ditanya apa hal yang paling bikin aku bersyukur, jawabannya nggak bakal berubah: <strong class="text-white font-medium">ya kamu.</strong>
+                    </p>
+                    <p>
+                        Makasih udah sabar dan mau terus jalan bareng aku. Dari jaman awal kita pacaran yang masih kaku, nonton Marvel bareng di Bandung, main ke pantai, sampai roadtrip pagi-pagi ke Santolo... semua kerasa pas banget karena sama kamu.
+                    </p>
+                    <p>
+                        Semoga di umur 24 ini kamu makin bahagia, sehat terus, dan dilancarin rezekinya. Ke depannya mungkin kita bakal makin repot nyiapin banyak hal. Mulai dari pertemuan keluarga, pilih cincin, sampai hari H nanti.
+                    </p>
+                    <p class="text-white font-medium italic">
+                        "Nggak usah buru-buru, pelan-pelan aja. Aku bakal selalu nemenin kamu."
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-5 mt-10 pt-8 border-t border-white/5 relative z-10">
+                    <div
+                        class="w-14 h-14 rounded-full bg-gradient-to-br from-rose-900 to-stone-900 border border-rose-500/30 flex items-center justify-center text-white serif italic text-2xl shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+                        H</div>
+                    <div>
+                        <p class="text-stone-100 font-medium tracking-wide">Hilman Taufik</p>
+                        <p class="text-rose-400/80 text-[10px] md:text-xs tracking-[0.2em] uppercase mt-1">Yang selalu dukung kamu</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Memory Stack -->
+        <section class="py-24 px-6 max-w-xl mx-auto text-center overflow-hidden">
+            <h2 class="serif text-3xl md:text-4xl mb-3 text-stone-200 reveal">Momen Kita</h2>
+            <p class="text-stone-500 text-sm mb-16 reveal font-light">Tap foto buat lihat foto lainnya.</p>
+
+            <div class="polaroid-container reveal" id="polaroid-stack">
+                <!-- Foto 12 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/sidang-skripsi-ayangg.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Sidang Skripsi Ayang</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Gedung Rektorat</p>
+                    </div>
+                </div>
+                <!-- Foto 11 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/date-again.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Date Again</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Tepi Gunung</p>
+                    </div>
+                </div>
+                <!-- Foto 10 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/lebaran-kesekian-kali.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Lebaran Kesekian Kali</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Lebaran Lagi</p>
+                    </div>
+                </div>
+                <!-- Foto 9 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/mantaii-again.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Pantai Santolo</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Pantai Lagi, Ngide Lagi</p>
+                    </div>
+                </div>
+                <!-- Foto 8 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/taman-langit-date.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Taman Langit</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Date Again</p>
+                    </div>
+                </div>
+                <!-- Foto 7 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/mantaii.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Pantai Santolo</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Senja & Ombak</p>
+                    </div>
+                </div>
+                <!-- Foto 6 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/lebaran-with-ayangg.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Lebaran With Ayang</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Ketupat & Senyum</p>
+                    </div>
+                </div>
+                <!-- Foto 5 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/nemenin-ayangg-dance.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Nemenin Ayang Dance</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Momen gemas</p>
+                    </div>
+                </div>
+                <!-- Foto 4 (Bawah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/jalan-jalan.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Jalan-Jalan</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Menikmati Pemandangan</p>
+                    </div>
+                </div>
+                <!-- Foto 3 (Tengah) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/marvel-date.jpg" alt="photo 1">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Nonton Spiderman NWH</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Marvel Date</p>
+                    </div>
+                </div>
+
+                <!-- Foto 2 (Tengah - Bogor) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/ke-kondangan-keluarga-besar.jpg" alt="photo 2">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Pergi ke Bogor</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Kondangan Keluarga Besar
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Foto 1 (Atas - Awal Pacaran) -->
+                <div class="polaroid" onclick="nextPhoto(this)">
+                    <!-- ARAHAN: Ganti src gambar di bawah dengan path gambar lokal yang sudah kamu download -->
+                    <div
+                        class="w-full h-full bg-stone-900 flex items-center justify-center text-stone-600 rounded overflow-hidden relative">
+                        <img src="./assets/awal-pacaran.jpg" alt="Awal Pacaran" class="w-full h-full object-cover">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-black font-bold text-sm serif italic">Awal Kita</p>
+                        <p class="text-stone-500 text-[10px] uppercase tracking-wider mt-1">Jaman Awal Pacaran</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Digital Guest Book -->
+        <section class="py-16 px-6 max-w-2xl mx-auto reveal">
+            <div class="text-center mb-10">
+                <h2 class="serif text-3xl md:text-4xl text-stone-200 mb-3">Ada yang mau disampein?</h2>
+                <p class="text-stone-500 text-sm font-light">Tulis sesuatu di sini buat aku.</p>
+            </div>
+
+            <!-- Form Box -->
+            <div class="glass p-6 md:p-8 rounded-[2rem] relative z-20">
+                <form id="message-form" class="space-y-5">
+                    <div>
+                        <textarea id="guest-message" rows="4" required
+                            class="w-full bg-black/40 border border-white/5 rounded-2xl p-5 text-stone-200 text-sm md:text-base placeholder-stone-600 focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/50 transition-all resize-none font-light"
+                            placeholder="Tulis pesan kamu di sini..."></textarea>
+                    </div>
+                    <button type="submit"
+                        class="w-full py-4 bg-stone-100 text-stone-900 font-semibold rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                        Kirim Pesan <i class="fas fa-paper-plane text-sm"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Message Wall -->
+            <div id="message-wall" class="mt-10 space-y-4">
+                <!-- Pinned Message -->
+                <div class="glass p-6 rounded-2xl border-l-2 border-l-stone-600 relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-3 relative z-10">
+                        <span class="font-medium text-stone-300 text-sm">Hilman Taufik</span>
+                        <span class="text-[10px] uppercase tracking-widest text-stone-600">Menunggu Balasan</span>
+                    </div>
+                    <p class="text-stone-400 text-sm font-light relative z-10 italic">"Pesan kamu bakal muncul di sini nanti 🤍"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-12 mt-10 text-center text-stone-700 text-[10px] tracking-[0.3em] uppercase reveal">
+            <p>Developed with love by Hilman • 2026</p>
+        </footer>
+
+    </div>
+
+    <!-- YouTube Iframe API Script -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        // --- 1. YOUTUBE AUDIO CONTROLLER ---
+        let player;
+        let isPlaying = false;
+        const musicIcon = document.getElementById('music-icon');
+
+        // Fungsi ini dipanggil otomatis oleh API YouTube saat library selesai di-load
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0',
+                width: '0',
+                videoId: 'ma4sO59mcC4', // ID Video Tulus - Monokrom
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'showinfo': 0,
+                    'rel': 0,
+                    'loop': 1,
+                    'playlist': 'ma4sO59mcC4'
+                }
+            });
+        }
+
+        function toggleMusic(autoPlay = false) {
+            if (!player || typeof player.getPlayerState !== 'function') return;
+
+            const state = player.getPlayerState();
+            // Jika sedang main dan fungsi tidak dipanggil paksa (autoPlay = false)
+            if (state === 1 && !autoPlay) {
+                player.pauseVideo();
+                musicIcon.classList.remove('fa-pause');
+                musicIcon.classList.add('fa-music');
+                isPlaying = false;
+            } else {
+                player.playVideo();
+                musicIcon.classList.remove('fa-music');
+                musicIcon.classList.add('fa-pause');
+                isPlaying = true;
+            }
+        }
+
+        // --- 2. HEARTBEAT LOCK SCREEN ---
+        let taps = 0;
+        const maxTaps = 5;
+        const btn = document.getElementById('heart-btn');
+        const progress = document.getElementById('heart-progress');
+        const instr = document.getElementById('instruction');
+
+        function pumpHeart() {
+            taps++;
+            let percentage = (taps / maxTaps) * 100;
+            progress.style.width = percentage + '%';
+
+            btn.style.transform = `scale(${1 + (taps * 0.15)})`;
+            setTimeout(() => { btn.style.transform = 'scale(1)'; }, 150);
+
+            if (taps === 1) { instr.style.opacity = '1'; }
+            if (taps === 3) { instr.innerText = "Dikit lagi..."; instr.classList.add('text-rose-500'); }
+
+            if (taps >= maxTaps) {
+                fireConfetti();
+                document.getElementById('intro-screen').classList.add('hide-screen');
+
+                setTimeout(() => {
+                    document.getElementById('intro-screen').style.display = 'none';
+                    document.getElementById('main-content').classList.remove('hidden');
+                    initScrollReveal();
+
+                    // Putar YouTube API
+                    toggleMusic(true);
+                }, 800);
+            }
+        }
+
+        // --- 3. PREMIUM CONFETTI ---
+        function fireConfetti() {
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+            const interval = setInterval(function () {
+                const timeLeft = 2000 - (Date.now() - Date.now());
+                if (timeLeft <= 0) return clearInterval(interval);
+                const particleCount = 50 * (timeLeft / 2000);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }, colors: ['#f43f5e', '#ffffff', '#a8a29e'] }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }, colors: ['#f43f5e', '#ffffff', '#a8a29e'] }));
+            }, 250);
+            confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 }, colors: ['#e11d48', '#fecdd3'] });
+        }
+
+        // --- 4. SCROLL REVEAL OBSERVER ---
+        function initScrollReveal() {
+            const reveals = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            reveals.forEach(reveal => observer.observe(reveal));
+
+            setTimeout(() => {
+                reveals.forEach(reveal => {
+                    if (reveal.getBoundingClientRect().top < window.innerHeight) {
+                        reveal.classList.add('active');
+                    }
+                });
+            }, 100);
+        }
+
+        // --- 5. POLAROID STACK LOGIC ---
+        function nextPhoto(el) {
+            el.classList.add('slide-out');
+            setTimeout(() => {
+                const container = document.getElementById('polaroid-stack');
+                el.classList.remove('slide-out');
+                container.insertBefore(el, container.firstChild);
+                resetPolaroids();
+            }, 600);
+        }
+
+        function resetPolaroids() {
+            const cards = document.querySelectorAll('.polaroid');
+            const total = cards.length;
+            cards.forEach((card, index) => {
+                if (index === total - 1) {
+                    card.style.transform = `rotate(-4deg) translateY(0)`;
+                    card.style.zIndex = 3;
+                } else if (index === total - 2) {
+                    card.style.transform = `rotate(3deg) translateY(8px)`;
+                    card.style.zIndex = 2;
+                } else {
+                    card.style.transform = `rotate(7deg) translateY(16px)`;
+                    card.style.zIndex = 1;
+                }
+            });
+        }
+
+        // --- 6. DIGITAL GUEST BOOK ---
+        document.getElementById('message-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const msgInput = document.getElementById('guest-message');
+            const msgText = msgInput.value.trim();
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            if (msgText === '') return;
+
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            submitBtn.disabled = true;
+
+            setTimeout(() => {
+                const wall = document.getElementById('message-wall');
+                const newMsg = document.createElement('div');
+
+                newMsg.className = 'glass p-6 rounded-2xl border-l-2 border-l-rose-500 opacity-0 transform -translate-y-4 transition-all duration-700';
+
+                newMsg.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-medium text-rose-300 text-sm">Resti Intania Denas</span>
+                        <span class="text-[10px] uppercase tracking-widest text-stone-500">Baru saja</span>
+                    </div>
+                    <p class="text-stone-300 text-sm font-light leading-relaxed">${msgText.replace(/\n/g, '<br>')}</p>
+                `;
+
+                wall.insertBefore(newMsg, wall.firstChild);
+
+                setTimeout(() => {
+                    newMsg.classList.remove('opacity-0', '-translate-y-4');
+                }, 50);
+
+                msgInput.value = '';
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Pesan Tersampaikan';
+
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                }, 2500);
+
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>
