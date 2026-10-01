@@ -529,14 +529,14 @@
             if (taps >= maxTaps) {
                 fireConfetti();
                 document.getElementById('intro-screen').classList.add('hide-screen');
+                
+                // Putar YouTube API langsung tanpa jeda
+                toggleMusic(true);
 
                 setTimeout(() => {
                     document.getElementById('intro-screen').style.display = 'none';
                     document.getElementById('main-content').classList.remove('hidden');
                     initScrollReveal();
-
-                    // Putar YouTube API
-                    toggleMusic(true);
                 }, 800);
             }
         }
